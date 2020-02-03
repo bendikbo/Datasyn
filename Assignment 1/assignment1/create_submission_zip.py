@@ -16,7 +16,7 @@ for filepath in files_to_include:
         print("Terminating program without creating zipfile.")
         exit(0)
 
-zipfile_path = "assignment_code.zip"
+zipfile_path = "assignmen1.zip"
 
 
 print("-"*80)

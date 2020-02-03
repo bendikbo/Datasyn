@@ -14,18 +14,17 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     """
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    ce = targets * np.log(outputs)
-    raise NotImplementedError
+    return -(1/(targets.shape[0]*targets.shape[1])) * np.sum(targets * np.log(outputs))
 
 
 class SoftmaxModel:
 
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
 
         # Define number of output nodes
-        self.num_outputs = None
+        self.num_outputs = 10
         self.w = np.zeros((self.I, self.num_outputs))
         self.grad = None
 
@@ -38,7 +37,14 @@ class SoftmaxModel:
         Returns:
             y: output of model with shape [batch size, num_outputs]
         """
-        return None
+        y_out = np.zeros((X.shape[0], self.num_outputs))
+        e_zkn = np.zeros([self.num_outputs])
+        for n in range(X.shape[0]):
+            for k in range(self.num_outputs):
+                e_zkn[k] = np.exp(np.transpose(self.w[:, k]).dot(X[n]))
+            for k in range(self.num_outputs):
+                y_out[n, k] = e_zkn[k]/np.sum(e_zkn)
+        return y_out
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -50,8 +56,16 @@ class SoftmaxModel:
         assert targets.shape == outputs.shape,\
             f"Output shape: {outputs.shape}, targets: {targets.shape}"
         self.grad = np.zeros_like(self.w)
+        for n in range(self.w.shape[1]):
+            self.grad[:, n] = -1 / targets.shape[0] * 1/self.num_outputs * np.dot(X.T, (targets[:, n] - outputs[:, n])) + 2 * self.l2_reg_lambda * self.w[:, n]
+        '''
+        for n in range(X.shape[0]):
+            for k in range(self.num_outputs):
+                self.grad[:, k] -= (1/X.shape[0])*(1/self.num_outputs * X[n].T.dot(targets[n, k] - outputs[n, k]))
+                self.grad[:, k] += 2 * self.l2_reg_lambda * self.w[:, k]
         assert self.grad.shape == self.w.shape,\
              f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
+        '''
 
     def zero_grad(self) -> None:
         self.grad = None
@@ -65,7 +79,10 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
     Returns:
         Y: shape [Num examples, num classes]
     """
-    raise NotImplementedError
+    encoded = np.zeros((Y.shape[0], num_classes))
+    for val in range(Y.shape[0]):
+        encoded[val, Y[val, 0]] = 1
+    return encoded
 
 
 def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):

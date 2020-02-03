@@ -15,7 +15,10 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray, model: SoftmaxModel) 
     Returns:
         Accuracy (float)
     """
+    raw_results = model.forward(X)
     accuracy = 0
+    for i in range(len(raw_results)):
+        accuracy += targets[i, np.argmax(raw_results[i])]/len(raw_results)
     return accuracy
 
 
@@ -25,7 +28,12 @@ def train(
         batch_size: int,
         l2_reg_lambda: float # Task 3 hyperparameter
         ):
+    #initialize and pre process training data
     global X_train, X_val, X_test
+    X_train = pre_process_images(X_train)
+    X_val = pre_process_images(X_val)
+    X_test = pre_process_images(X_test)
+
     # Utility variables
     num_batches_per_epoch = X_train.shape[0] // batch_size
     num_steps_per_val = num_batches_per_epoch // 5
@@ -34,7 +42,8 @@ def train(
     val_loss = {}
     train_accuracy = {}
     val_accuracy = {}
-
+    losses = []
+    early_stop = False
     # Intialize our model
     model = SoftmaxModel(l2_reg_lambda)
 
@@ -45,17 +54,16 @@ def train(
             end = start + batch_size
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
 
-            _train_loss = 0
-            train_loss[global_step] = _train_loss
-            
+            outputs = model.forward(X_batch)
+            model.backward(X_batch, outputs, Y_batch)
+            model.w -= learning_rate * model.grad
             # Track training loss continuously
-            _train_loss = 0
+            _train_loss = cross_entropy_loss(Y_batch, outputs)
             train_loss[global_step] = _train_loss
             # Track validation loss / accuracy every time we progress 20% through the dataset
             if global_step % num_steps_per_val == 0:
-                _val_loss = 0
+                _val_loss = cross_entropy_loss(Y_val, model.forward(X_val))
                 val_loss[global_step] = _val_loss
-
                 train_accuracy[global_step] = calculate_accuracy(
                     X_train, Y_train, model)
                 val_accuracy[global_step] = calculate_accuracy(
@@ -69,13 +77,16 @@ def train(
 validation_percentage = 0.1
 X_train, Y_train, X_val, Y_val, X_test, Y_test = utils.load_full_mnist(
     validation_percentage)
+Y_val = one_hot_encode(Y_val, 10)
+Y_train = one_hot_encode(Y_train, 10)
+Y_test = one_hot_encode(Y_test, 10)
 
 
 # Hyperparameters
 num_epochs = 50
 learning_rate = .3
 batch_size = 128
-l2_reg_lambda = 0.001
+l2_reg_lambda = 0.0
 
 model, train_loss, val_loss, train_accuracy, val_accuracy = train(
     num_epochs=num_epochs,
@@ -110,4 +121,21 @@ plt.show()
 utils.plot_loss(train_accuracy, "Training Accuracy")
 utils.plot_loss(val_accuracy, "Validation Accuracy")
 plt.legend()
+plt.show()
+
+images = []
+
+for i in range(10):
+    image = np.zeros((28, 28))
+    for y in range(28):
+        for x in range(28):
+            image[y][x] = model.w[:, i][x + y*28]
+    images.append(image)
+
+images = np.concatenate(images, axis=1)
+plt.imshow(images)
+plt.savefig("weights.png")
+
+
+
 plt.show()

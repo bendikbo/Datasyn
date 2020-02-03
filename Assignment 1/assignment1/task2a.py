@@ -4,22 +4,29 @@ np.random.seed(1)
 
 
 def pre_process_images(X: np.ndarray):
+    print(X)
+    print(X.shape)
+
+    X = X.astype('float32')
+    X *= 1/255 #normalize: X = (x-min)*(newMax-newMin)/(Max-Min)+newMin
+
+
+    X = np.insert(X,-1,1,axis = 1)
+
+
+
     """
     Args:
         X: images of shape [batch size, 784] in the range (0, 255)
     Returns:
         X: images of shape [batch size, 785] in the range (0, 1)
     """
-    assert X.shape[1] == 784,\
+    assert X.shape[1] == 785,\
         f"X.shape[1]: {X.shape[1]}, should be 784"
+    print(X.shape)
 
-    def process_image(image):
-        image = np.dot(image, 1/255)
-        image = np.insert(image, 1, 0)
-        return image
-    process_v = np.vectorize(process_image)
-    X = process_v(X)
     return X
+
 
 
 def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
@@ -30,37 +37,45 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray) -> float:
     Returns:
         Cross entropy error (float)
     """
+    #yn= targets
+    #^yn = outputs
+    size = outputs.size
+
+    cross_entr_err = np.sum(np.dot(targets.T, np.log(outputs))+np.dot((1-targets).T, np.log(1-outputs)))
+    cross_entr_err = -cross_entr_err/size
+
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    c = 0
-    for
-    return 0
+    return cross_entr_err
 
 
 class BinaryModel:
 
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
         self.w = np.zeros((self.I, 1))
         self.grad = None
 
         # Hyperparameter for task 3
         self.l2_reg_lambda = l2_reg_lambda
-    
+
     def forward(self, X: np.ndarray) -> np.ndarray:
+        #self.w = np.random.rand(785,1)
+        #print(self.w)
+
+        X = np.dot(X,self.w)
+
+        sig = 1/(1+np.exp(-X))# Sigmoid
         """
         Args:
             X: images of shape [batch size, 785]
         Returns:
             y: output of model with shape [batch size, 1]
         """
-        y = np.array([])
-        for image in X:
-            image = np.array(image)
-            w_transposed_x = np.dot(self.w.transpose(), image)
-            np.append(y, 1/(1+np.exp(-w_transposed_x)))
-        return y
+        # Sigmoid
+
+        return sig
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -69,13 +84,33 @@ class BinaryModel:
             outputs: outputs of model of shape: [batch size, 1]
             targets: labels/targets of each image of shape: [batch size, 1]
         """
+        self.grad = np.zeros_like(self.w)
+
+        #yn= targets
+        #^yn = outputs
+        #xn = input
+        #gradient = -(yn-^yn)xn
+
+
+    #    size = X.shape[0]
+
+    #    for n in range(size):
+    #        self.grad += (-tmp[n,0] + X[n:(n+1,),:].T)/size
+
+        #self.grad = -np.dot(X.T, targets-outputs)/size
+
+
+
         assert targets.shape == outputs.shape,\
             f"Output shape: {outputs.shape}, targets: {targets.shape}"
-        self.grad = np.zeros_like(self.w)
         assert self.grad.shape == self.w.shape,\
             f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
-        for image in range(len(X)):
-            self.grad -= np.dot(targets[image] - outputs[image], X[image])
+        #for image in range(len(X)):
+        #    self.grad -= np.dot(targets[image] - outputs[image], X[image])
+
+        #self.grad = -1/targets.shape[0] * np.dot(X.T, (targets - outputs))
+        self.grad = -1/targets.shape[0] * np.dot(X.T, (targets - outputs)) + 2 * self.l2_reg_lambda * self.w
+
 
     def zero_grad(self) -> None:
         self.grad = None
@@ -83,7 +118,7 @@ class BinaryModel:
 
 def gradient_approximation_test(model: BinaryModel, X: np.ndarray, Y: np.ndarray):
     """
-        Numerical approximation for gradients. Should not be edited. 
+        Numerical approximation for gradients. Should not be edited.
         Details about this test is given in the appendix in the assignment.
     """
     w_orig = model.w.copy()
