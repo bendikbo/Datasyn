@@ -5,20 +5,29 @@ np.random.seed(1)
 
 
 def pre_process_images(X: np.ndarray):
-    '''
-    I'm guessing this code will be more optimized than an implementation through numpy vectorization
-    as numpy vectorization is basically implemented as a for loop, see "notes" in the docs:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.vectorize.html
-    '''
-    std_dev = np.std(X)
-    mean = np.mean(X)
-    X = X.astype('float32')
-    X = np.subtract(X, mean)
-    X *= 1/std_dev
+    """
+    Args:
+        X: images of shape [batch size, 784] in the range (0, 255)
+    Returns:
+        X: images of shape [batch size, 785]
+    """
+
+    X = X-33.34#find_mean(X)
+    print(find_mean(X))
+    X = X/78.59#find_standard_deviation(X)
+    #print(find_standard_deviation(X))
     X = np.insert(X,-1,1,axis = 1)
+
+
     assert X.shape[1] == 785,\
         f"X.shape[1]: {X.shape[1]}, should be 784"
     return X
+
+def find_mean(X: np.ndarray):
+    return np.mean(X)
+
+def find_standard_deviation(X: np.ndarray):
+    return np.std(X)
 
 
 def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
@@ -29,9 +38,17 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     Returns:
         Cross entropy error (float)
     """
+    size = outputs.size
+
+    cross_entr_err = np.sum(np.multiply(targets, np.log(outputs)))#+np.dot((1-targets).T, np.log(1-outputs)))
+    cross_entr_err = -cross_entr_err#/targets.shape[0]
+
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
-    raise NotImplementedError
+
+    assert targets.shape == outputs.shape,\
+        f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
+    return cross_entr_err
 
 
 class SoftmaxModel:
@@ -43,13 +60,17 @@ class SoftmaxModel:
                  use_improved_weight_init: bool  # Task 3c hyperparameter
                  ):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
         self.use_improved_sigmoid = use_improved_sigmoid
 
         # Define number of output nodes
         # neurons_per_layer = [64, 10] indicates that we will have two layers:
         # A hidden layer with 64 neurons and a output layer with 10 neurons.
         self.neurons_per_layer = neurons_per_layer
+
+        #chaches
+        self.activations = []
+        self.forwards = []
 
         # Initialize the weights
         self.ws = []
@@ -62,6 +83,7 @@ class SoftmaxModel:
             prev = size
         self.grads = [None for i in range(len(self.ws))]
 
+
     def forward(self, X: np.ndarray) -> np.ndarray:
         """
         Args:
@@ -69,7 +91,35 @@ class SoftmaxModel:
         Returns:
             y: output of model with shape [batch size, num_outputs]
         """
-        return None
+        forwards = []
+        activations = []
+
+
+        prev = X
+        activations.append(prev)
+        for i in range(len(self.ws)-1):
+            z = np.dot(prev,self.ws[i])
+            #sigmoid
+            prev = 1/(1+np.exp(-z))
+
+            forwards.append(z)
+            activations.append(prev)
+
+
+        z = np.dot(prev,self.ws[-1])
+
+        #softmax
+        prev = np.divide(np.exp(z),np.sum(np.exp(z),axis = 1).reshape(-1,1))
+
+        #exponent = np.exp(curr)
+        #sum_exponent = sum(exponent)
+
+        #prev = exponent/sum_exponent
+        self.forwards = forwards
+        self.activations = activations
+
+        return prev
+
 
     def backward(self, X: np.ndarray, outputs: np.ndarray,
                  targets: np.ndarray) -> None:
@@ -85,12 +135,29 @@ class SoftmaxModel:
         # For example, self.grads[0] will be the gradient for the first hidden layer
         self.grads = []
 
+
+        zj = np.dot(X, self.ws[0])
+        aj = 1/(1 + np.exp(-zj))
+
+        del_k = - (targets - outputs)
+
+        grad_w_kj = (np.dot(del_k.T, self.activations[-1])).T
+
+        der_sig = (1/(1 + np.exp(-self.forwards[-1])))*(1 - (1/(1 + np.exp(-self.forwards[-1]))))
+
+        del_j = np.dot(self.ws[1], del_k.T)* der_sig.T
+        grad_w_ij = np.dot(del_j, X).T
+
+        #self.grads = [grad_w_ij.T/X.shape[0], grad_w_kj.T/X.shape[0]]
+        self.grads = [grad_w_ij, grad_w_kj]
+
         for grad, w in zip(self.grads, self.ws):
             assert grad.shape == w.shape,\
                 f"Expected the same shape. Grad shape: {grad.shape}, w: {w.shape}."
 
     def zero_grad(self) -> None:
         self.grads = [None for i in range(len(self.ws))]
+
 
 
 def one_hot_encode(Y: np.ndarray, num_classes: int):
@@ -101,13 +168,16 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
     Returns:
         Y: shape [Num examples, num classes]
     """
-    raise NotImplementedError
+    encoded = np.zeros((Y.shape[0], num_classes))
+    for val in range(Y.shape[0]):
+        encoded[val, Y[val, 0]] = 1
+    return encoded
 
 
 def gradient_approximation_test(
         model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):
     """
-        Numerical approximation for gradients. Should not be edited. 
+        Numerical approximation for gradients. Should not be edited.
         Details about this test is given in the appendix in the assignment.
     """
     epsilon = 1e-3
