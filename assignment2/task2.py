@@ -4,6 +4,18 @@ import matplotlib.pyplot as plt
 import typing
 from task2a import cross_entropy_loss, SoftmaxModel, one_hot_encode, pre_process_images
 np.random.seed(0)
+import random
+
+
+def equal_random_permutation(X: np.ndarray, Y: np.ndarray):
+    tuple_x_y = list(zip(X, Y))
+    random.shuffle(tuple_x_y)
+    new_x, new_y = zip(*tuple_x_y)
+    return np.array(new_x), np.array(new_y)
+
+
+
+
 
 
 def calculate_accuracy(X: np.ndarray, targets: np.ndarray,
@@ -62,8 +74,7 @@ def train(
             for i in range(len(model.ws)):
                 model.ws[i] -= learning_rate * model.grads[i]
 
-            #_train_loss = cross_entropy_loss(Y_train, model.forward(X_train))
-            #train_loss[global_step] = _train_loss
+            
 
 
             # Track train / validation loss / accuracy
@@ -71,15 +82,15 @@ def train(
             if (global_step % num_steps_per_val) == 0:
                 _val_loss = cross_entropy_loss(Y_val, model.forward(X_val))
                 val_loss[global_step] = _val_loss
-
-
-
+                _train_loss = cross_entropy_loss(Y_train, model.forward(X_train))
+                train_loss[global_step] = _train_loss
                 train_accuracy[global_step] = calculate_accuracy(
                     X_train, Y_train, model)
                 val_accuracy[global_step] = calculate_accuracy(
                     X_val, Y_val, model)
 
             global_step += 1
+        X_train, Y_train = equal_random_permutation(X_train, Y_train)
 
     return model, train_loss, val_loss, train_accuracy, val_accuracy
 
@@ -157,5 +168,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("Number of gradient steps")
     plt.ylabel("Accuracy")
-    plt.savefig("softmax_train_graph_task2.png")
+    plt.savefig("softmax_train_graph_task3a.png")
     plt.show()
