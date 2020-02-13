@@ -16,14 +16,11 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray,
     Returns:
         Accuracy (float)
     """
-    def is_accurate(single_X: np.ndarray, target: np.ndarray):
-        if model.forward(single_X) == target:
-            return 1
-        else:
-            return 0
-    is_accurate_v = np.vectorize(is_accurate)
-    return np.average(is_accurate_v(X, targets))
-
+    raw_results = model.forward(X)
+    accuracy = 0
+    for i in range(len(raw_results)):
+        accuracy += targets[i, np.argmax(raw_results[i])]/len(raw_results)
+    return accuracy
 
 def train(
         model: SoftmaxModel,
@@ -54,24 +51,28 @@ def train(
             end = start + batch_size
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
 
+
             #task2c
             #randomize weights for hidden layers
-            for i in range (len(model.ws)-1):
-                model.ws[i] = np.random.uniform(-1,1,(785, 64))
-            #randomize weights for outputlayer
-            model.ws[-1] = np.random.uniform(-1,1,(785, 10))
 
-            for i in range(model.ws[i]):
+            outputs = model.forward(X_batch)
+            model.backward(X_batch, outputs, Y_batch)
+
+
+            for i in range(len(model.ws)):
+                model.ws[i] -= learning_rate * model.grads[i]
+
+            #_train_loss = cross_entropy_loss(Y_train, model.forward(X_train))
+            #train_loss[global_step] = _train_loss
 
 
             # Track train / validation loss / accuracy
             # every time we progress 20% through the dataset
             if (global_step % num_steps_per_val) == 0:
-                _val_loss = 0
+                _val_loss = cross_entropy_loss(Y_val, model.forward(X_val))
                 val_loss[global_step] = _val_loss
 
-                _train_loss = 0
-                train_loss[global_step] = _train_loss
+
 
                 train_accuracy[global_step] = calculate_accuracy(
                     X_train, Y_train, model)
@@ -79,6 +80,7 @@ def train(
                     X_val, Y_val, model)
 
             global_step += 1
+
     return model, train_loss, val_loss, train_accuracy, val_accuracy
 
 
@@ -87,6 +89,14 @@ if __name__ == "__main__":
     validation_percentage = 0.2
     X_train, Y_train, X_val, Y_val, X_test, Y_test = utils.load_full_mnist(
         validation_percentage)
+
+    X_train = pre_process_images(X_train)
+    X_test = pre_process_images(X_test)
+    X_val = pre_process_images(X_val)
+
+    Y_train = one_hot_encode(Y_train,10)
+    Y_val = one_hot_encode(Y_val,10)
+    Y_test = one_hot_encode(Y_test,10)
 
     # Hyperparameters
     num_epochs = 20
@@ -132,7 +142,8 @@ if __name__ == "__main__":
     # Plot loss
     plt.figure(figsize=(20, 8))
     plt.subplot(1, 2, 1)
-    plt.ylim([0.1, .5])
+    plt.ylim([0,1])
+    #plt.ylim([0.1, .5])
     utils.plot_loss(train_loss, "Training Loss")
     utils.plot_loss(val_loss, "Validation Loss")
     plt.xlabel("Number of gradient steps")
@@ -146,5 +157,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("Number of gradient steps")
     plt.ylabel("Accuracy")
-    plt.savefig("softmax_train_graph.png")
+    plt.savefig("softmax_train_graph_task2.png")
     plt.show()
