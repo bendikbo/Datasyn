@@ -12,9 +12,9 @@ def pre_process_images(X: np.ndarray):
         X: images of shape [batch size, 785]
     """
 
-    X = X-33.34#find_mean(X)
-    print(find_mean(X))
-    X = X/78.59#find_standard_deviation(X)
+    X = X-33.31#find_mean(X)
+    #print(find_mean(X))
+    X = X/78.57#find_standard_deviation(X)
     #print(find_standard_deviation(X))
     X = np.insert(X,-1,1,axis = 1)
 
@@ -41,7 +41,7 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     size = outputs.size
 
     cross_entr_err = np.sum(np.multiply(targets, np.log(outputs)))#+np.dot((1-targets).T, np.log(1-outputs)))
-    cross_entr_err = -cross_entr_err#/targets.shape[0]
+    cross_entr_err = -cross_entr_err/targets.shape[0]
 
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
@@ -78,7 +78,8 @@ class SoftmaxModel:
         for size in self.neurons_per_layer:
             w_shape = (prev, size)
             print("Initializing weight to shape:", w_shape)
-            w = np.zeros(w_shape)
+            w = np.random.uniform(-1,1,w_shape)#np.zeros(w_shape)
+
             self.ws.append(w)
             prev = size
         self.grads = [None for i in range(len(self.ws))]
@@ -141,15 +142,15 @@ class SoftmaxModel:
 
         del_k = - (targets - outputs)
 
-        grad_w_kj = (np.dot(del_k.T, self.activations[-1])).T
+        grad_w_kj = (np.dot(del_k.T, aj)).T
 
-        der_sig = (1/(1 + np.exp(-self.forwards[-1])))*(1 - (1/(1 + np.exp(-self.forwards[-1]))))
+        der_sig = (1/(1 + np.exp(-zj)))*(1 - (1/(1 + np.exp(-zj))))
 
         del_j = np.dot(self.ws[1], del_k.T)* der_sig.T
         grad_w_ij = np.dot(del_j, X).T
 
         #self.grads = [grad_w_ij.T/X.shape[0], grad_w_kj.T/X.shape[0]]
-        self.grads = [grad_w_ij, grad_w_kj]
+        self.grads = [grad_w_ij/X.shape[0], grad_w_kj/X.shape[0]]
 
         for grad, w in zip(self.grads, self.ws):
             assert grad.shape == w.shape,\
