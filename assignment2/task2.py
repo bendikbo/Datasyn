@@ -16,8 +16,13 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray,
     Returns:
         Accuracy (float)
     """
-    accuracy = 0
-    return accuracy
+    def is_accurate(single_X: np.ndarray, target: np.ndarray):
+        if model.forward(single_X) == target:
+            return 1
+        else:
+            return 0
+    is_accurate_v = np.vectorize(is_accurate)
+    return np.average(is_accurate_v(X, targets))
 
 
 def train(
@@ -57,7 +62,7 @@ def train(
             model.ws[-1] = np.random.uniform(-1,1,(785, 10))
 
             for i in range(model.ws[i]):
-                
+
 
             # Track train / validation loss / accuracy
             # every time we progress 20% through the dataset
