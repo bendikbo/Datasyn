@@ -75,12 +75,21 @@ class SoftmaxModel:
         # Initialize the weights
         self.ws = []
         prev = self.I
-        for size in self.neurons_per_layer:
-            w_shape = (prev, size)
-            print("Initializing weight to shape:", w_shape)
-            w = np.zeros(w_shape)
-            self.ws.append(w)
-            prev = size
+        if not use_improved_weight_init:
+            for size in self.neurons_per_layer:
+                w_shape = (prev, size)
+                print("Initializing weight to shape:", w_shape)
+                w = np.zeros(w_shape)
+                self.ws.append(w)
+                prev = size
+        #3c
+        if use_improved_weight_init:
+            for size in self.neurons_per_layer:
+                w_shape = (prev, size)
+                print("Improved init weights to shape:", w_shape)
+                w = np.random.normal(0, 1/np.sqrt(prev), size)
+                self.ws.append(w)
+                prev = size
         self.grads = [None for i in range(len(self.ws))]
         self.moment = np.zeros(np.shape(self.ws))
 
