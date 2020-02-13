@@ -54,12 +54,7 @@ def train(
 
             #task2c
             #randomize weights for hidden layers
-            '''
-            for i in range (len(model.ws)-1):
-                model.ws[i] = np.random.uniform(-1,1,(785, 64))
-            #randomize weights for outputlayer
-            model.ws[-1] = np.random.uniform(-1,1,(64, 10))
-'''
+
             outputs = model.forward(X_batch)
             model.backward(X_batch, outputs, Y_batch)
 
@@ -67,6 +62,8 @@ def train(
             for i in range(len(model.ws)):
                 model.ws[i] -= learning_rate * model.grads[i]
 
+            #_train_loss = cross_entropy_loss(Y_train, model.forward(X_train))
+            #train_loss[global_step] = _train_loss
 
 
             # Track train / validation loss / accuracy
@@ -75,8 +72,7 @@ def train(
                 _val_loss = cross_entropy_loss(Y_val, model.forward(X_val))
                 val_loss[global_step] = _val_loss
 
-                _train_loss = cross_entropy_loss(Y_batch, outputs)
-                train_loss[global_step] = _train_loss
+
 
                 train_accuracy[global_step] = calculate_accuracy(
                     X_train, Y_train, model)
@@ -84,6 +80,7 @@ def train(
                     X_val, Y_val, model)
 
             global_step += 1
+
     return model, train_loss, val_loss, train_accuracy, val_accuracy
 
 
@@ -145,7 +142,8 @@ if __name__ == "__main__":
     # Plot loss
     plt.figure(figsize=(20, 8))
     plt.subplot(1, 2, 1)
-    plt.ylim([0.1, .5])
+    plt.ylim([0,1])
+    #plt.ylim([0.1, .5])
     utils.plot_loss(train_loss, "Training Loss")
     utils.plot_loss(val_loss, "Validation Loss")
     plt.xlabel("Number of gradient steps")
@@ -159,5 +157,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("Number of gradient steps")
     plt.ylabel("Accuracy")
-    plt.savefig("softmax_train_graph.png")
+    plt.savefig("softmax_train_graph_task2.png")
     plt.show()

@@ -68,6 +68,9 @@ class SoftmaxModel:
         # A hidden layer with 64 neurons and a output layer with 10 neurons.
         self.neurons_per_layer = neurons_per_layer
 
+        #improvements
+        self.better_sigmoid = False
+
         #chaches
         self.activations = []
         self.forwards = []
@@ -108,6 +111,7 @@ class SoftmaxModel:
 
 
         z = np.dot(prev,self.ws[-1])
+        forwards.append(z)
 
         #softmax
         prev = np.divide(np.exp(z),np.sum(np.exp(z),axis = 1).reshape(-1,1))
@@ -136,21 +140,43 @@ class SoftmaxModel:
         # For example, self.grads[0] will be the gradient for the first hidden layer
         self.grads = []
 
+        activations = self.activations
+        forwards = self.forwards
 
-        zj = np.dot(X, self.ws[0])
-        aj = 1/(1 + np.exp(-zj))
+        #zj = np.dot(X, self.ws[0])
+        #aj = 1/(1 + np.exp(-zj))
 
-        del_k = - (targets - outputs)
+        for i in range(len(self.ws)):
+            #last layer
+            if i == 0:
+                del_k = - (targets - outputs)
+                self.grads.append(np.dot(del_k.T, activations[-1]).T/X.shape[0])
 
-        grad_w_kj = (np.dot(del_k.T, aj)).T
+            else:
+                if self.use_improved_sigmoid:
+                    #to be implemented
+                    break
+                else:
+                    #all hidden layer
+                    der_sig = (1/(1 + np.exp(-forwards[-i-1])))*(1 - (1/(1 + np.exp(-forwards[-i-1]))))
+                    del_j = np.dot(del_k, self.ws[-i].T)*der_sig
+                    grad_w_ij = np.dot(activations[-i-1].T,del_j)
+                    self.grads.insert(0, grad_w_ij/X.shape[0]) #insert in the beginning of list
+                    del_k = del_j
 
-        der_sig = (1/(1 + np.exp(-zj)))*(1 - (1/(1 + np.exp(-zj))))
 
-        del_j = np.dot(self.ws[1], del_k.T)* der_sig.T
-        grad_w_ij = np.dot(del_j, X).T
+
+
+
+        #grad_w_kj = (np.dot(del_k.T, activations[-1])).T #outputlayer
+
+        #der_sig = (1/(1 + np.exp(-zj)))*(1 - (1/(1 + np.exp(-zj))))
+
+        #del_j = np.dot(self.ws[1], del_k.T) * der_sig.T
+        #grad_w_ij = np.dot(del_j, X).T
 
         #self.grads = [grad_w_ij.T/X.shape[0], grad_w_kj.T/X.shape[0]]
-        self.grads = [grad_w_ij/X.shape[0], grad_w_kj/X.shape[0]]
+        #self.grads = [grad_w_ij/X.shape[0], grad_w_kj/X.shape[0]]
 
         for grad, w in zip(self.grads, self.ws):
             assert grad.shape == w.shape,\
