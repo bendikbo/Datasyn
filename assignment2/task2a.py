@@ -82,6 +82,7 @@ class SoftmaxModel:
             self.ws.append(w)
             prev = size
         self.grads = [None for i in range(len(self.ws))]
+        self.moment = np.zeros(np.shape(self.ws))
 
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -120,7 +121,11 @@ class SoftmaxModel:
 
         return prev
 
-
+        #3d
+    def momentum_gradient_update_step(self, learning_rate: float, mu: float):
+        self.moment = self.moment * mu + (1 - mu) * self.grads
+        self.ws -= self.moment * learning_rate
+    
     def backward(self, X: np.ndarray, outputs: np.ndarray,
                  targets: np.ndarray) -> None:
         """
