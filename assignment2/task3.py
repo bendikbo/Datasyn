@@ -15,11 +15,28 @@ def better_sigmoid(x):
 
 #3c
 def re_init_weights(model: SoftmaxModel):
-    prev = model.I
+    
     model.ws.clear()
-    for size in model.neurons_per_layer:
-        w_shape = (prev, size)
-        print("Re-init weights to shape:", w_shape)
-        w = np.random.normal(0, 1/np.sqrt(prev), size)
-        model.ws.append(w)
-        prev = size
+    
+
+#3d
+def momentum_gradient_update_step(model: SoftmaxModel, learning_rate: float, prev_moment: np.ndarray, mu: float):
+    subtract_ws = np.array([])
+    for w in model.ws:
+        momentum = prev_moment * mu + (1 - mu) * grad
+        np.append(subtract_ws, alpha * momentum)
+    np.subtract()
+
+
+
+
+
+
+
+        
+    for w in weights:
+         momentum = prev_momentum * gamma + (1-gamma)*grad
+        w -= alpha * momentum
+
+        momentum = prev_momentum * gAMMa + alpha*grad
+        w -= momentum
