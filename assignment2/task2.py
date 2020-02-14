@@ -72,9 +72,13 @@ def train(
 
 
             for i in range(len(model.ws)):
-                model.ws[i] -= learning_rate * model.grads[i]
-
-            
+                if use_momentum:
+                    model.moment[i] *= momentum_gamma
+                    model.moment[i] += model.grads[i]*(1-momentum_gamma)
+                    model.ws[i] -= learning_rate * model.moment[i]
+                else:
+                    model.ws[i] -= model.grads[i]
+               
 
 
             # Track train / validation loss / accuracy
@@ -90,7 +94,9 @@ def train(
                     X_val, Y_val, model)
 
             global_step += 1
-        X_train, Y_train = equal_random_permutation(X_train, Y_train)
+            #3a
+        if use_shuffle:
+            X_train, Y_train = equal_random_permutation(X_train, Y_train)
 
     return model, train_loss, val_loss, train_accuracy, val_accuracy
 
@@ -111,16 +117,16 @@ if __name__ == "__main__":
 
     # Hyperparameters
     num_epochs = 20
-    learning_rate = .1
+    learning_rate = .02
     batch_size = 32
-    neurons_per_layer = [64, 10]
+    neurons_per_layer = [64, 64, 10]
     momentum_gamma = .9  # Task 3 hyperparameter
 
     # Settings for task 3. Keep all to false for task 2.
-    use_shuffle = False
-    use_improved_sigmoid = False
-    use_improved_weight_init = False
-    use_momentum = False
+    use_shuffle = True
+    use_improved_sigmoid = True
+    use_improved_weight_init = True
+    use_momentum = True
 
     model = SoftmaxModel(
         neurons_per_layer,
@@ -168,5 +174,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("Number of gradient steps")
     plt.ylabel("Accuracy")
-    plt.savefig("softmax_train_graph_task3a.png")
+    plt.savefig("softmax_train_graph_task4d.png")
     plt.show()

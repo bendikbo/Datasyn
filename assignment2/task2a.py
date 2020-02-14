@@ -4,6 +4,9 @@ import typing
 np.random.seed(1)
 
 
+def improved_cig(x:np.ndarray):
+    return 2.28787/(1+np.cosh(4*x/3))
+
 def pre_process_images(X: np.ndarray):
     """
     Args:
@@ -74,21 +77,30 @@ class SoftmaxModel:
         #chaches
         self.activations = []
         self.forwards = []
-
         # Initialize the weights
         self.ws = []
         prev = self.I
+        self.moment = []
         if use_improved_weight_init:
-            for size in self.neurons_per_layer
+            for size in self.neurons_per_layer:
+                w_shape = (prev, size)
+                momentum = np.zeros(w_shape)
+                self.moment.append(momentum)
+                print("Initializing weight to shape:", w_shape)
+                w = np.random.normal(0, 1/np.sqrt(prev),w_shape)
+                self.ws.append(w)
+                prev = size
         else:
             for size in self.neurons_per_layer:
                 w_shape = (prev, size)
+                momentum = np.zeros(w_shape)
+                self.moment.append(momentum)
                 print("Initializing weight to shape:", w_shape)
                 w = np.random.uniform(-1,1,w_shape)#np.zeros(w_shape)
                 self.ws.append(w)
                 prev = size
         self.grads = [None for i in range(len(self.ws))]
-        self.moment = np.zeros(np.shape(self.ws))
+        prev = self.I
 
 
     def forward(self, X: np.ndarray) -> np.ndarray:
@@ -108,10 +120,8 @@ class SoftmaxModel:
             z = np.dot(prev,self.ws[i])
             #sigmoid
             prev = 1/(1+np.exp(-z))
-
             forwards.append(z)
             activations.append(prev)
-
 
         z = np.dot(prev,self.ws[-1])
         forwards.append(z)
@@ -127,11 +137,6 @@ class SoftmaxModel:
         self.activations = activations
 
         return prev
-
-        #3d
-    def momentum_gradient_update_step(self, learning_rate: float, mu: float):
-        self.moment = self.moment * mu + (1 - mu) * self.grads
-        self.ws -= self.moment * learning_rate
     
     def backward(self, X: np.ndarray, outputs: np.ndarray,
                  targets: np.ndarray) -> None:
@@ -161,8 +166,11 @@ class SoftmaxModel:
 
             else:
                 if self.use_improved_sigmoid:
-                    #to be implemented
-                    break
+                    der_sig = improved_cig(forwards[-i-1])
+                    del_j = np.dot(del_k, self.ws[-i].T) * der_sig
+                    grad_w_ij = np.dot(activations[-i-1].T, del_j)
+                    self.grads.insert(0, grad_w_ij/X.shape[0])
+                    del_k = del_j
                 else:
                     #all hidden layer
                     der_sig = (1/(1 + np.exp(-forwards[-i-1])))*(1 - (1/(1 + np.exp(-forwards[-i-1]))))
@@ -170,7 +178,6 @@ class SoftmaxModel:
                     grad_w_ij = np.dot(activations[-i-1].T,del_j)
                     self.grads.insert(0, grad_w_ij/X.shape[0]) #insert in the beginning of list
                     del_k = del_j
-
 
 
 
@@ -256,7 +263,7 @@ if __name__ == "__main__":
 
     neurons_per_layer = [64, 10]
     use_improved_sigmoid = False
-    use_improved_weight_init = False
+    use_improved_weight_init = True
     model = SoftmaxModel(
         neurons_per_layer, use_improved_sigmoid, use_improved_weight_init)
 
