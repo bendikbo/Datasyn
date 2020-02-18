@@ -1,0 +1,59 @@
+3a-test:
+Final Train Cross Entropy Loss: 0.03981231309594524
+Final Validation Cross Entropy Loss: 0.18141966665899356
+Final Test Cross Entropy Loss: 0.17571125995400497
+Final Train accuracy: 0.9876666666675448
+Final Validation accuracy: 0.955916666666578
+Final Test accuracy: 0.9540999999999112
+
+3b-test:
+
+Final Train Cross Entropy Loss: 0.06930561181783224
+Final Validation Cross Entropy Loss: 0.18102176672633835
+Final Test Cross Entropy Loss: 0.17835901530967013
+Final Train accuracy: 0.9827708333342055
+Final Validation accuracy: 0.9486666666665788
+Final Test accuracy: 0.9455999999999122
+
+3c-test:
+Final Train Cross Entropy Loss: 0.022379094400488152
+Final Validation Cross Entropy Loss: 0.11811187175017429
+Final Test Cross Entropy Loss: 0.11104289076472335
+Final Train accuracy: 0.996854166667556
+Final Validation accuracy: 0.9660833333332436
+Final Test accuracy: 0.9670999999999098
+
+
+3d-test:
+Final Train Cross Entropy Loss: 0.08197503919321122
+Final Validation Cross Entropy Loss: 0.13426872851030866
+Final Test Cross Entropy Loss: 0.12500400582889507
+Final Train accuracy: 0.9809375000008699
+Final Validation accuracy: 0.9618333333332441
+Final Test accuracy: 0.9636999999999102
+
+4a:
+Final Train Cross Entropy Loss: 0.17688394853386163
+Final Validation Cross Entropy Loss: 0.23147031861786532
+Final Test Cross Entropy Loss: 0.2224883328641418
+Final Train accuracy: 0.9513125000008337
+Final Validation accuracy: 0.9318333333332474
+Final Test accuracy: 0.9345999999999134
+
+
+4b:
+Final Train Cross Entropy Loss: 0.06111650908070391
+Final Validation Cross Entropy Loss: 0.11031738692195193
+Final Test Cross Entropy Loss: 0.09903475456725958
+Final Train accuracy: 0.9870000000008773
+Final Validation accuracy: 0.9681666666665767
+Final Test accuracy: 0.9705999999999094
+
+4d:
+Final Train Cross Entropy Loss: 0.03441020584744
+Final Validation Cross Entropy Loss: 0.11010925132760307
+Final Test Cross Entropy Loss: 0.10681597870018508
+Final Train accuracy: 0.9942708333342195
+Final Validation accuracy: 0.9670833333332435
+Final Test accuracy: 0.9670999999999098
+

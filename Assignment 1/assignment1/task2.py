@@ -69,7 +69,7 @@ def train(
 
             ## Task 2b
             # Weights are initialized to zero vector when model object is created
-
+            print(Y_train.shape)
             outputs = model.forward(X_batch)
             model.backward(X_batch, outputs, Y_batch)
             model.w -= learning_rate * model.grad
