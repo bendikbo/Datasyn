@@ -25,7 +25,6 @@ def compute_loss_and_accuracy(
     """
     average_loss = 0
     accuracy = 0
-
     with torch.no_grad():
         for (X_batch, Y_batch) in dataloader:
             # Transfer images/labels to GPU VRAM, if possible
@@ -33,7 +32,7 @@ def compute_loss_and_accuracy(
             Y_batch = utils.to_cuda(Y_batch)
             # Forward pass the images through our model
             output_probs = model(X_batch)
-
+            average_loss = torch.nn.CrossEntropyLoss(X_batch, Y_batch)
             # Compute Loss and Accuracy
 
     return average_loss, accuracy
