@@ -23,7 +23,7 @@ def compute_loss_and_accuracy(
     Returns:
         [average_loss, accuracy]: both scalar.
     """
-    loss_function = torch.nn.CrossEntropyLoss()
+    #loss_function = torch.nn.CrossEntropyLoss()
     
 
     average_loss = 0
@@ -36,6 +36,8 @@ def compute_loss_and_accuracy(
 
     total_correct = 0
     total_loss = 0  
+    total_images = 0 
+    total_batches = 0 
 
     with torch.no_grad():
         for (X_batch, Y_batch) in dataloader:
@@ -44,20 +46,21 @@ def compute_loss_and_accuracy(
             Y_batch = utils.to_cuda(Y_batch)
             # Forward pass the images through our model
             output_probs = model(X_batch)
-
+           # print(output_probs)
             # Compute Loss and Accuracy
             batchsize = X_batch.shape[0]
             total_images += batchsize
             total_batches += 1
 
-            loss = loss_function(X_batch, Y_batch)
-            total_loss +=loss 
+            loss = loss_criterion(output_probs, Y_batch)
+            total_loss += loss 
             correct = (output_probs.argmax(dim = -1) == Y_batch).sum()
+           # print(correct)
             total_correct += correct
             accuracy = 100*correct/batch_size
     
 
-    accuracy = total_correct / total_images
+    accuracy = float(total_correct) / total_images
     average_loss = total_loss / total_batches
     return average_loss, accuracy
 
@@ -85,6 +88,7 @@ class ExampleModel(nn.Module):
                 stride=1,
                 padding=2
             ),
+            nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Conv2d(
                 in_channels=32,
@@ -93,11 +97,30 @@ class ExampleModel(nn.Module):
                 stride=1,
                 padding=2
             ),
+            nn.ReLU(),
             nn.MaxPool2d(2),
             # B, 128, 8, 8
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=128,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+           # nn.Flatten(),
+           # nn.ReLU(),
+           # nn.Softmax(dim = 1)
             )
 
-        self.classifier = nn.Sequential()
+        self.classifier = nn.Sequential(
+            nn.Linear(128*4*4, 64),
+            nn.ReLU(),
+            nn.Linear(64, self.num_classes)
+        )
+        #nn.Linear is the fully connected layer
+        #softmax is already handeled by cross_entropy?
 
 
         """
@@ -125,8 +148,9 @@ class ExampleModel(nn.Module):
         # B 128*8*8
         features = features.view((batch_size, -1))
         # Flatten == ^
-        classification = self.classifier(features)
-        return classification
+
+        out = self.classifier(features)
+        #return classification
         expected_shape = (batch_size, self.num_classes)
         assert out.shape == (batch_size, self.num_classes),\
             f"Expected output of forward pass to be: {expected_shape}, but got: {out.shape}"
