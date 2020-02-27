@@ -46,11 +46,7 @@ def compute_loss_and_accuracy(
             Y_batch = utils.to_cuda(Y_batch)
             # Forward pass the images through our model
             output_probs = model(X_batch)
-<<<<<<< HEAD
-            average_loss = torch.nn.CrossEntropyLoss(X_batch, Y_batch)
-=======
            # print(output_probs)
->>>>>>> bdb28403cdacc1c78c5e7d54c4f5e8dbba6a9d80
             # Compute Loss and Accuracy
             batchsize = X_batch.shape[0]
             total_images += batchsize
@@ -92,8 +88,9 @@ class ExampleModel(nn.Module):
                 stride=1,
                 padding=2
             ),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(2),
+            #nn.MaxPool2d(2),
             nn.Conv2d(
                 in_channels=32,
                 out_channels=64,
@@ -101,6 +98,8 @@ class ExampleModel(nn.Module):
                 stride=1,
                 padding=2
             ),
+            nn.BatchNorm2d(64),
+
             nn.ReLU(),
             nn.MaxPool2d(2),
             # B, 128, 8, 8
@@ -112,16 +111,27 @@ class ExampleModel(nn.Module):
                 padding=2
             ),
             nn.ReLU(),
+            nn.BatchNorm2d(128),
+
+            nn.Conv2d(
+                in_channels=128,
+                out_channels=256,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            nn.ReLU(),
             nn.MaxPool2d(2)
-           # nn.Flatten(),
-           # nn.ReLU(),
-           # nn.Softmax(dim = 1)
+           
             )
 
         self.classifier = nn.Sequential(
-            nn.Linear(128*4*4, 64),
+            nn.Linear(256*8*8,64),#256*4*4, 64),
+            nn.Dropout(p = 0.15),
             nn.ReLU(),
-            nn.Linear(64, self.num_classes)
+            nn.Linear(64, self.num_classes),
+            nn.Dropout(p = 0.15)
+            
         )
         #nn.Linear is the fully connected layer
         #softmax is already handeled by cross_entropy?
@@ -133,10 +143,7 @@ class ExampleModel(nn.Module):
         self.feature_extractor(X) -> y
         
         """
-        # The output of feature_extractor will be [batch_size, num_filters, 16, 16]
-        self.num_output_features = 32*32*32
-        # Initialize our last fully connected layer
-        # Inputs all extracted features from the convolutional layersThere are 50,000 training images and 10, 000 test images.functions
+        # The output of feature_extractor will be eonvolutional layersThere are 50,000 training images and 10, 000 test images.functions
 
     def forward(self, x):
         """
@@ -217,8 +224,9 @@ class Trainer:
         print(self.model)
 
         # Define our optimizer. SGD = Stochastich Gradient Descent
-        self.optimizer = torch.optim.SGD(self.model.parameters(),
-                                         self.learning_rate)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), self.learning_rate)
+
+        #self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.5e-4)
 
         # Load our dataset
         self.dataloader_train, self.dataloader_val, self.dataloader_test = dataloaders
@@ -296,13 +304,23 @@ class Trainer:
                 # Y_batch is the CIFAR10 image label. Shape: [batch_size]
                 # Transfer images / labels to GPU VRAM, if possible
                 X_batch = utils.to_cuda(X_batch)
+                X_batch = torch.autograd.Variable(X_batch, requires_grad=True)
                 Y_batch = utils.to_cuda(Y_batch)
 
                 # Perform the forward pass
                 predictions = self.model(X_batch)
                 # Compute the cross entropy loss for the batch
                 loss = self.loss_criterion(predictions, Y_batch)
+                
+                eps = 0.02
+                X_batch_adv = X_batch  + eps* torch.sign(torch.autograd.grad(loss, X_batch, retain_graph=True)[0].detach())
+                predictions = self.model(X_batch_adv)
+                # Compute the cross entropy loss for the batch
+                lambda_adv = 0.5
+                loss += lambda_adv * self.loss_criterion(predictions, Y_batch)
+
                 self.TRAIN_LOSS[self.global_step] = loss.detach().cpu().item()
+                
 
                 # Backpropagation
                 loss.backward()
@@ -379,4 +397,4 @@ if __name__ == "__main__":
         dataloaders
     )
     trainer.train()
-    create_plots(trainer, "task2")
+    create_plots(trainer, "task3i")

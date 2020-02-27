@@ -7,6 +7,8 @@ import typing
 import collections
 from torch import nn
 from dataloaders import load_cifar10
+from dataloaders import load_cifar10_aug
+
 
 
 def compute_loss_and_accuracy(
@@ -46,11 +48,7 @@ def compute_loss_and_accuracy(
             Y_batch = utils.to_cuda(Y_batch)
             # Forward pass the images through our model
             output_probs = model(X_batch)
-<<<<<<< HEAD
-            average_loss = torch.nn.CrossEntropyLoss(X_batch, Y_batch)
-=======
            # print(output_probs)
->>>>>>> bdb28403cdacc1c78c5e7d54c4f5e8dbba6a9d80
             # Compute Loss and Accuracy
             batchsize = X_batch.shape[0]
             total_images += batchsize
@@ -368,7 +366,7 @@ if __name__ == "__main__":
     batch_size = 64
     learning_rate = 5e-2
     early_stop_count = 4
-    dataloaders = load_cifar10(batch_size)
+    dataloaders = load_cifar10_aug(batch_size)
     model = ExampleModel(image_channels=3, num_classes=10)
     trainer = Trainer(
         batch_size,
@@ -379,4 +377,4 @@ if __name__ == "__main__":
         dataloaders
     )
     trainer.train()
-    create_plots(trainer, "task2")
+    create_plots(trainer, "task3ii")
