@@ -7,6 +7,8 @@ import typing
 import collections
 from torch import nn
 from dataloaders import load_cifar10
+from dataloaders import load_cifar10_aug
+
 
 
 def compute_loss_and_accuracy(
@@ -364,7 +366,7 @@ if __name__ == "__main__":
     batch_size = 64
     learning_rate = 5e-2
     early_stop_count = 4
-    dataloaders = load_cifar10(batch_size)
+    dataloaders = load_cifar10_aug(batch_size)
     model = ExampleModel(image_channels=3, num_classes=10)
     trainer = Trainer(
         batch_size,
@@ -375,4 +377,4 @@ if __name__ == "__main__":
         dataloaders
     )
     trainer.train()
-    create_plots(trainer, "task2")
+    create_plots(trainer, "task3ii")
