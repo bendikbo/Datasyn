@@ -56,7 +56,8 @@ def compute_loss_and_accuracy(
             Y_batch = utils.to_cuda(Y_batch)
             # Forward pass the images through our model
             output_probs = model(X_batch)
-            average_loss = torch.nn.CrossEntropyLoss(X_batch, Y_batch)
+            
+            
             # Compute Loss and Accuracy
             batchsize = X_batch.shape[0]
             total_images += batchsize
@@ -68,10 +69,11 @@ def compute_loss_and_accuracy(
            # print(correct)
             total_correct += correct
             accuracy = 100*correct/batch_size
-    
 
     accuracy = float(total_correct) / total_images
     average_loss = total_loss / total_batches
+    print("average_loss: ", average_loss)
+    print("accuracy: ", accuracy)
     return average_loss, accuracy
 
 
@@ -249,10 +251,10 @@ def create_plots(trainer: Trainer, name: str):
 
 
 if __name__ == "__main__":
-    epochs = 2
+    epochs = 5
     batch_size = 32
     learning_rate = 5e-4
-    early_stop_count = 1
+    early_stop_count = 5
     dataloaders = load_cifar10_Resnet(batch_size)
     model = Model()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.5e-4) #Adam optimizer
@@ -266,4 +268,8 @@ if __name__ == "__main__":
         dataloaders
     )
     trainer.train()
+    print(trainer.TEST_LOSS)
+    print(trainer.TEST_ACC)
+    print(trainer.VALIDATION_LOSS)
+    print(trainer.VALIDATION_ACC)
     create_plots(trainer, "task4a")
